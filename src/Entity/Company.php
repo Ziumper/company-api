@@ -10,10 +10,12 @@ use ApiPlatform\Metadata\ApiResource;
 
 #[ORM\Entity(repositoryClass: CompanyRepository::class)]
 #[ApiResource]
+#[ORM\UniqueConstraint(fields:["taxReferenceNumber"],name:"tax_reference_number")]
+#[ORM\UniqueConstraint(fields:["zipcode"], name: "zipcode")]
 class Company
 {
     #[ORM\Id]
-    #[ORM\GeneratedValue]
+    #[ORM\GeneratedValue(strategy:"SEQUENCE")]
     #[ORM\Column]
     private ?int $id = null;
 
@@ -26,7 +28,7 @@ class Company
     #[ORM\Column(length: 255)]
     private ?string $street = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 6)]
     private ?string $zipcode = null;
 
     #[ORM\Column(length: 255)]
