@@ -2,16 +2,30 @@
 
 namespace App\Entity;
 
+use App\Dto\CompanyDto;
 use App\Repository\CompanyRepository;
+use App\State\CompanyProcessor;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
 
 #[ORM\Entity(repositoryClass: CompanyRepository::class)]
 #[ApiResource]
 #[ORM\UniqueConstraint(fields:["taxReferenceNumber"],name:"tax_reference_number")]
 #[ORM\UniqueConstraint(fields:["zipcode"], name: "zipcode")]
+#[Post(input:CompanyDto::class, processor: CompanyProcessor::class)]
+#[Put]
+#[Get]
+#[Patch]
+#[Delete]
+#[GetCollection]
 class Company
 {
     #[ORM\Id]
