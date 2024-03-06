@@ -5,5 +5,11 @@ when@dev: &dev
         auto_refresh_proxies: true
         faker:
             locale: pl_PL
-
-when@test: *dev
+        
+when@test:
+    zenstruck_foundry:
+        faker:
+            locale: pl_PL
+        auto_refresh_proxies: true
+        database_resetter:
+            enabled: false
