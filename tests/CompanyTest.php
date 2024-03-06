@@ -68,6 +68,9 @@ class CompanyTest extends ApiTestCase
 
         $array = json_decode(json_encode($company), true);
         
+        /**
+         * @var ResponseInterface $response
+         */
         $response = static::createClient()->request('POST', $this->apiUrl, 
         [
             'json' => $array,    
@@ -163,6 +166,43 @@ class CompanyTest extends ApiTestCase
 
             $this->assertEquals(422, $response->getStatusCode());
         }
+    }
+
+    public function testUpdateCompany() {
+         // Only create the book we need with a given ISBN
+         $oldName = "Old Company S.A.";
+         $newName = "New Company S.A";
+         CompanyFactory::createOne(['name' => $oldName]);
+    
+         $iri = $this->findIriBy(Company::class, ['name' => $oldName]);
+         static::createClient()->request('PATCH', $iri, [
+             'json' => [
+                 'name' => $newName,
+             ],
+             'headers' => [
+                 'Content-Type' => 'application/merge-patch+json',
+             ]           
+         ]);
+ 
+         $this->assertResponseIsSuccessful();
+         $this->assertJsonContains([
+             'name' => $newName,
+         ]);
+    }   
+
+    
+    public function testDeleteBook(): void
+    {
+        $companyName = "My Company S.A";
+        CompanyFactory::createOne(['name' => $companyName]);
+        
+        $iri = $this->findIriBy(Company::class, ['name' => $companyName]);
+        static::createClient()->request('DELETE', $iri);
+
+        $this->assertResponseStatusCodeSame(204);
+        $this->assertNull(
+            static::getContainer()->get('doctrine')->getRepository(Company::class)->findOneBy(['name' => $companyName])
+        );
     }
 
     private function getCompanyWithBlankField(string $name): array {

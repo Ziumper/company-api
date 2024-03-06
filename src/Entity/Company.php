@@ -19,7 +19,6 @@ use ApiPlatform\Metadata\GetCollection;
 #[ORM\Entity(repositoryClass: CompanyRepository::class)]
 #[ApiResource]
 #[ORM\UniqueConstraint(fields:["taxReferenceNumber"],name:"tax_reference_number")]
-#[ORM\UniqueConstraint(fields:["zipcode"], name: "zipcode")]
 #[Post(input:CompanyDto::class, processor: CompanyProcessor::class)]
 #[Put]
 #[Get]
