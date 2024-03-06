@@ -14,7 +14,8 @@ final class DefaultEmployeesStory extends Story
         
         EmployeeFactory::createMany(150,function() {
             return [
-                "company" => CompanyFactory::random()
+                "company" => CompanyFactory::random([
+                ])
             ];
         });
     }

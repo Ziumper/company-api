@@ -46,12 +46,12 @@ final class CompanyFactory extends ModelFactory
     protected function getDefaults(): array
     {
         return [
-            'createdAt' => \DateTimeImmutable::createFromMutable(self::faker()->dateTime()),
+            'createdAt' => \DateTimeImmutable::createFromMutable(new \DateTime("now")),
             'name' => self::faker()->company(),
             'street' => self::faker()->streetAddress(),
             'taxReferenceNumber' => self::faker()->numerify("##########"),
             'town' => self::faker()->city(),
-            'updatedAt' => \DateTimeImmutable::createFromMutable(self::faker()->dateTime()),
+            'updatedAt' => \DateTimeImmutable::createFromMutable(new \DateTime("now")),
             'zipcode' => self::faker()->postcode()
         ];
     }

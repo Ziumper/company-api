@@ -45,11 +45,11 @@ final class EmployeeFactory extends ModelFactory
     protected function getDefaults(): array
     {
         return [
-            'createdAt' => \DateTimeImmutable::createFromMutable(self::faker()->dateTime()),
+            'createdAt' => \DateTimeImmutable::createFromMutable(new \DateTime("now")),
             'email' => self::faker()->email(),
             'name' => self::faker()->firstName(),
             'surname' => self::faker()->lastName(),
-            'updatedAt' => \DateTimeImmutable::createFromMutable(self::faker()->dateTime()),
+            'updatedAt' => \DateTimeImmutable::createFromMutable(new \DateTime('now'))
         ];
     }
 
