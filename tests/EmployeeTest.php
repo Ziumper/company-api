@@ -137,67 +137,142 @@ class EmployeeTest extends ApiTestCase
             'headers'=> [
                 'content-type' => 'application/ld+json'
             ]
-            ]);
+        ]);
 
         $this->assertResponseIsSuccessful(message:"not succesfull response, from post message");
     }
 
+    public function testPartialUpdateEmployee() {
+        $oldName = "Franek";
+        $newName = "Dolas";
+
+        $company = CompanyFactory::createOne();
+        EmployeeFactory::createOne(
+            [ 
+                'name' => $oldName,
+                'company' => $company
+            ]
+        );
+
+        $iri = $this->findIriBy(Employee::class, ['name' => $oldName]);
+        static::createClient()->request('PATCH',$iri,[
+            'json' => [
+                'name' => $newName
+            ],
+            'headers' => [
+                'content-type' => 'application/merge-patch+json'
+            ]
+            ]);
+
+        $this->assertResponseIsSuccessful();
+        $this->assertJsonContains([
+            'name' => $newName
+        ]);
+    }
+   
+    public function testPartialUpdateEmployeeFailWithNoName() {
+        $oldName = "Franek";
+
+        $company = CompanyFactory::createOne();
+        EmployeeFactory::createOne(
+            [ 
+                'name' => $oldName,
+                'company' => $company
+            ]
+        );
+
+        $iri = $this->findIriBy(Employee::class, ['name' => $oldName]);
+        static::createClient()->request('PATCH',$iri,[
+            'json' => [
+                'name' => ''
+            ],
+            'headers' => [
+                'content-type' => 'application/merge-patch+json'
+            ]
+            ]);
+
+        $this->assertResponseIsUnprocessable();
+    }
+
+    public function testDeleteEmployee() {
+
+        $name = "Franek";
+        EmployeeFactory::createOne(['name' => $name, 'company' => CompanyFactory::createOne()]);        
+        $iri = $this->findIriBy(Employee::class, ["name"=> $name]);
+        static::createClient()->request('DELETE',$iri);
+        $this->assertResponseStatusCodeSame(204);
+        $this->assertNull(
+            static::getContainer()->get('doctrine')->getRepository(Company::class)->findOneBy(['name' => $name])
+        );
+    }
+
+    public function testPutUpdate() {
+        $oldName = "Franek";
+        $newName = "Dolas";
+
+        $company = CompanyFactory::createOne();
+        $employee = EmployeeFactory::createOne(
+            [ 
+                'name' => $oldName,
+                'company' => $company
+            ]
+        );
+
+        $iri = $this->findIriBy(Employee::class, ['name' => $oldName]);
+
+        $employeeDto = new EmployeeDto();
+
+        $employeeDto->name = $employee->getName();
+        $employeeDto->company = $iri;
+        $employeeDto->phoneNumber = $employee->getPhoneNumber();
+        $employeeDto->surname = $employee->getSurname();
+        $employeeDto->email = $employee->getEmail();
+
+        static::createClient()->request('PATCH',$iri,[
+            'json' => [
+                'name' => $newName
+            ],
+            'headers' => [
+                'content-type' => 'application/merge-patch+json'
+            ]
+            ]);
+
+        $this->assertResponseIsSuccessful();
+        $this->assertJsonContains([
+            'name' => $newName
+        ]);        
+    }
+
+    public function testPutUpdateFailWithNoName() {
+        $oldName = "Franek";
+        $company = CompanyFactory::createOne();
+        $employee = EmployeeFactory::createOne(
+            [ 
+                'name' => $oldName,
+                'company' => $company
+            ]
+        );
+
+        $iri = $this->findIriBy(Employee::class, ['name' => $oldName]);
+
+        $employeeDto = new EmployeeDto();
+
+        $employeeDto->name = $employee->getName();
+        $employeeDto->company = $iri;
+        $employeeDto->phoneNumber = $employee->getPhoneNumber();
+        $employeeDto->surname = $employee->getSurname();
+        $employeeDto->email = $employee->getEmail();
+
+        static::createClient()->request('PATCH',$iri,[
+            'json' => [
+                'name' => ''
+            ],
+            'headers' => [
+                'content-type' => 'application/merge-patch+json'
+            ]
+            ]);
+
+        $this->assertResponseIsUnprocessable();
+    }
     
-    // public function testUpdateCompany() {
-    //      // Only create the book we need with a given ISBN
-    //      $oldName = "Old Company S.A.";
-    //      $newName = "New Company S.A";
-    //      CompanyFactory::createOne(['name' => $oldName]);
-    
-    //      $iri = $this->findIriBy(Company::class, ['name' => $oldName]);
-    //      static::createClient()->request('PATCH', $iri, [
-    //          'json' => [
-    //              'name' => $newName,
-    //          ],
-    //          'headers' => [
-    //              'Content-Type' => 'application/merge-patch+json',
-    //          ]           
-    //      ]);
- 
-    //      $this->assertResponseIsSuccessful();
-    //      $this->assertJsonContains([
-    //          'name' => $newName,
-    //      ]);
-    // }   
-
-    
-    // public function testDeleteBook(): void
-    // {
-    //     $companyName = "My Company S.A";
-    //     CompanyFactory::createOne(['name' => $companyName]);
-        
-    //     $iri = $this->findIriBy(Company::class, ['name' => $companyName]);
-    //     static::createClient()->request('DELETE', $iri);
-
-    //     $this->assertResponseStatusCodeSame(204);
-    //     $this->assertNull(
-    //         static::getContainer()->get('doctrine')->getRepository(Company::class)->findOneBy(['name' => $companyName])
-    //     );
-    // }
-
-    // private function getCompanyWithBlankField(string $name): array {
-    //     $company = new CompanyDto();
-
-    //     /**
-    //      * @var \Faker\Generator $faker
-    //      */
-    //     $faker = CompanyFactory::faker();
-    //     $company->name = $faker->name();
-    //     $company->street = $faker->streetAddress();
-    //     $company->taxReferenceNumber = $faker->numerify("##########"); 
-    //     $company->town = $faker->city();
-    //     $company->zipcode = $faker->postcode();
-
-    //     $array = json_decode(json_encode($company), true);
-
-    //     $array[$name] = "";
-
-    //     return $array;
-    // }
-  
 }

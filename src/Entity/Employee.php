@@ -16,10 +16,16 @@ use ApiPlatform\Metadata\GetCollection;
 
 #[ORM\Entity(repositoryClass: EmployeeRepository::class)]
 #[ApiResource]
-#[Post(input: EmployeeDto::class,processor: EmployeeProcessor::class)]
-#[Put]
+#[Post(input: EmployeeDto::class,processor: EmployeeProcessor::class,
+    validationContext:
+    ['groups'=>['Default','postValidation']]
+    )
+]
+#[Put(input: EmployeeDto::class,processor: EmployeeProcessor::class,validationContext:[
+    'groups' => ['Default','postValidation']
+])]
 #[Get]
-#[Patch]
+#[Patch(input: EmployeeDto::class,processor: EmployeeProcessor::class)]
 #[Delete]
 #[GetCollection]
 class Employee
