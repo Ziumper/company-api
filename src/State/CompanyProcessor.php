@@ -51,32 +51,27 @@ class CompanyProcessor implements  ProcessorInterface {
             }
             
             $data = $company;
+
+            return $this->updateAndSave($data, $operation, $uriVariables, $context);
         }
 
         if($operation instanceof \ApiPlatform\Metadata\Post) {
             $company = new Company();
-            $company->setName($data->name);
-            $company->setTaxReferenceNumber($data->taxReferenceNumber);
-            $company->setTown($data->town);
-            $company->setStreet($data->street);
-            $company->setZipcode($data->zipcode);
-            $data = $company;
-        } 
-
-        if($operation instanceof \ApiPlatform\Metadata\Put) {
-            /**
-             * @var Company $company
-             */
+        } else {
             $company = $this->entityManager->getRepository(Company::class)->find($uriVariables['id']);
-            $company->setName($data->name);
-            $company->setTaxReferenceNumber($data->taxReferenceNumber);
-            $company->setTown($data->town);
-            $company->setStreet($data->street);
-            $company->setZipcode($data->zipcode);
-
-            $data = $company;
         }
 
+        $company->setName($data->name);
+        $company->setTaxReferenceNumber($data->taxReferenceNumber);
+        $company->setTown($data->town);
+        $company->setStreet($data->street);
+        $company->setZipcode($data->zipcode);
+        $data = $company;
+        
+        return $this->updateAndSave($data, $operation, $uriVariables,$context);
+    }
+
+    private function updateAndSave(mixed $data, $operation, $uriVariables, $context): Company {
         $result = $this->createdUpdatedAtProcessor->process($data, $operation, $uriVariables, $context);
         return $this->persistProcessor->process($result,$operation,$uriVariables,$context);
     }

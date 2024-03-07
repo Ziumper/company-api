@@ -51,37 +51,30 @@ class EmployeeProcessor implements ProcessorInterface
             }
             
             $data = $employee;
-        }
-
-        if($operation instanceof \ApiPlatform\Metadata\Put) {
-            
-            $employee = $this->entityManager->getRepository(Employee::class)->find($uriVariables['id']);
-            /**
-             * @var Company $resource
-             */
-            $resource = $this->iriConverter->getResourceFromIri($data->company,$context,$operation); 
-            $employee->setCompany($resource);
-            $employee->setName($data->name);
-            $employee->setPhoneNumber($data->phoneNumber);
-            $employee->setSurname($data->surname);
-            $employee->setEmail($data->email);
-            $data = $employee;
+            return $this->updateAndSave($data,$operation,$uriVariables,$context);
         }
 
         if($operation instanceof Post)  {
             /**
              * @var Company $resource
              */
-            $resource = $this->iriConverter->getResourceFromIri($data->company,$context,$operation); 
             $employee = new Employee();
-            $employee->setCompany($resource);
-            $employee->setName($data->name);
-            $employee->setPhoneNumber($data->phoneNumber);
-            $employee->setSurname($data->surname);
-            $employee->setEmail($data->email);
-            $data = $employee;
+        } else {
+            $employee = $this->entityManager->getRepository(Employee::class)->find($uriVariables['id']);
         }
 
+        $resource = $this->iriConverter->getResourceFromIri($data->company,$context,$operation); 
+        $employee->setCompany($resource);
+        $employee->setName($data->name);
+        $employee->setPhoneNumber($data->phoneNumber);
+        $employee->setSurname($data->surname);
+        $employee->setEmail($data->email);
+        $data = $employee;
+
+        return $this->updateAndSave($data,$operation,$uriVariables,$context);
+    }
+
+    private function updateAndSave(mixed $data,\ApiPlatform\Metadata\Operation $operation, $uriVariables = [], $context = []): Employee {
         $result = $this->createdUpdatedAtProcessor->process($data, $operation, $uriVariables, $context);
         return $this->persistProcessor->process($result, $operation, $uriVariables, $context);
     }
