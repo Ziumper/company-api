@@ -22,7 +22,7 @@ use ApiPlatform\Metadata\GetCollection;
 #[Post(input:CompanyDto::class, processor: CompanyProcessor::class,validationContext:
     ["groups" => ['Default','postValidation']])
 ]
-#[Put]
+#[Put(input:CompanyDto::class, processor: CompanyProcessor::class, validationContext:["groups" => ['postValidation']])]
 #[Get]
 #[Patch(input:CompanyDto::class, processor: CompanyProcessor::class)]
 #[Delete]

@@ -31,16 +31,6 @@ class CompanyProcessor implements  ProcessorInterface {
      */
     public function process(mixed $data, \ApiPlatform\Metadata\Operation $operation, $uriVariables = [], $context = []): Company
     {
-        if($operation instanceof \ApiPlatform\Metadata\Post) {
-            $company = new Company();
-            $company->setName($data->name);
-            $company->setTaxReferenceNumber($data->taxReferenceNumber);
-            $company->setTown($data->town);
-            $company->setStreet($data->street);
-            $company->setZipcode($data->zipcode);
-            $data = $company;
-        }
-
         if($operation instanceof \ApiPlatform\Metadata\Patch) {
             //validation
             foreach($data as $key => $value){
@@ -60,6 +50,30 @@ class CompanyProcessor implements  ProcessorInterface {
                 $company->$setfunctionName($value);
             }
             
+            $data = $company;
+        }
+
+        if($operation instanceof \ApiPlatform\Metadata\Post) {
+            $company = new Company();
+            $company->setName($data->name);
+            $company->setTaxReferenceNumber($data->taxReferenceNumber);
+            $company->setTown($data->town);
+            $company->setStreet($data->street);
+            $company->setZipcode($data->zipcode);
+            $data = $company;
+        } 
+
+        if($operation instanceof \ApiPlatform\Metadata\Put) {
+            /**
+             * @var Company $company
+             */
+            $company = $this->entityManager->getRepository(Company::class)->find($uriVariables['id']);
+            $company->setName($data->name);
+            $company->setTaxReferenceNumber($data->taxReferenceNumber);
+            $company->setTown($data->town);
+            $company->setStreet($data->street);
+            $company->setZipcode($data->zipcode);
+
             $data = $company;
         }
 

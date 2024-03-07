@@ -168,8 +168,64 @@ class CompanyTest extends ApiTestCase
         }
     }
 
+    public function testPutUpdate() {
+        $oldName = "Old Company S.A.";
+        $newName = "New Company S.A";
+        $company = CompanyFactory::createOne(['name' => $oldName]);
+   
+        $companyDto = new CompanyDto();
+        $companyDto->name = $newName;
+        $companyDto->street = $company->getStreet();
+        $companyDto->town = $company->getTown();
+        $companyDto->taxReferenceNumber = $company->getTaxReferenceNumber();
+        $companyDto->zipcode = $company->getZipcode();
+
+
+        $array = json_decode(json_encode($companyDto), true);
+
+        $iri = $this->findIriBy(Company::class, ["name" => $oldName]);
+        static::createClient()->request('PUT', $iri, 
+        [
+            'json' => $array,
+            'headers' => [
+                'Content-Type' => 'application/ld+json',
+            ]           
+        ]);
+
+        $this->assertResponseIsSuccessful();
+        $this->assertJsonContains([
+            'name' => $newName,
+        ]);
+    }
+
+    public function testPutUpdateFailWithEmptyName() {
+        $oldName = "Old Company S.A.";
+        $newName = "New Company S.A";
+        $company = CompanyFactory::createOne(['name' => $oldName]);
+   
+        $companyDto = new CompanyDto();
+        $companyDto->name = '';
+        $companyDto->street = $company->getStreet();
+        $companyDto->town = $company->getTown();
+        $companyDto->taxReferenceNumber = $company->getTaxReferenceNumber();
+        $companyDto->zipcode = $company->getZipcode();
+
+
+        $array = json_decode(json_encode($companyDto), true);
+
+        $iri = $this->findIriBy(Company::class, ["name" => $oldName]);
+        static::createClient()->request('PUT', $iri, 
+        [
+            'json' => $array,
+            'headers' => [
+                'Content-Type' => 'application/ld+json',
+            ]           
+        ]);
+
+        $this->assertResponseIsUnprocessable();
+    }
+
     public function testPartialUpdate() {
-         // Only create the book we need with a given ISBN
          $oldName = "Old Company S.A.";
          $newName = "New Company S.A";
          CompanyFactory::createOne(['name' => $oldName]);
@@ -191,9 +247,7 @@ class CompanyTest extends ApiTestCase
     }   
 
     public function testPartialUpdateCompanyFailBecauseOfEmptyNameValue() {
-        // Only create the book we need with a given ISBN
         $oldName = "Old Company S.A.";
-        $newName = "New Company S.A";
         CompanyFactory::createOne(['name' => $oldName]);
    
         $iri = $this->findIriBy(Company::class, ['name' => $oldName]);
