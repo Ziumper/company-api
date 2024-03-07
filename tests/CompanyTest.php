@@ -168,7 +168,7 @@ class CompanyTest extends ApiTestCase
         }
     }
 
-    public function testUpdateCompany() {
+    public function testPartialUpdate() {
          // Only create the book we need with a given ISBN
          $oldName = "Old Company S.A.";
          $newName = "New Company S.A";
@@ -189,6 +189,25 @@ class CompanyTest extends ApiTestCase
              'name' => $newName,
          ]);
     }   
+
+    public function testPartialUpdateCompanyFailBecauseOfEmptyNameValue() {
+        // Only create the book we need with a given ISBN
+        $oldName = "Old Company S.A.";
+        $newName = "New Company S.A";
+        CompanyFactory::createOne(['name' => $oldName]);
+   
+        $iri = $this->findIriBy(Company::class, ['name' => $oldName]);
+        static::createClient()->request('PATCH', $iri, [
+            'json' => [
+                'name' => '',
+            ],
+            'headers' => [
+                'Content-Type' => 'application/merge-patch+json',
+            ]           
+        ]);
+
+        $this->assertResponseIsUnprocessable();
+   }   
 
     
     public function testDeleteBook(): void

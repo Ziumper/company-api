@@ -19,10 +19,12 @@ use ApiPlatform\Metadata\GetCollection;
 #[ORM\Entity(repositoryClass: CompanyRepository::class)]
 #[ApiResource]
 #[ORM\UniqueConstraint(fields:["taxReferenceNumber"],name:"tax_reference_number")]
-#[Post(input:CompanyDto::class, processor: CompanyProcessor::class)]
+#[Post(input:CompanyDto::class, processor: CompanyProcessor::class,validationContext:
+    ["groups" => ['Default','postValidation']])
+]
 #[Put]
 #[Get]
-#[Patch]
+#[Patch(input:CompanyDto::class, processor: CompanyProcessor::class)]
 #[Delete]
 #[GetCollection]
 class Company

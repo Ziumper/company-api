@@ -6,17 +6,17 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 class CompanyDto {
 
-    #[Assert\NotBlank]
+    #[Assert\NotBlank(groups:["postValidation"])]
     public string $name;
-    #[Assert\NotBlank]
+    #[Assert\NotBlank(groups:["postValidation"])]
     #[Assert\Regex('^\d{10}$^')]
     public string $taxReferenceNumber;
-    #[Assert\NotBlank]
+    #[Assert\NotBlank(groups:['postValidation'])]
     #[Assert\Regex('^\d{2}-\d{3}$^')]
     public string $zipcode;
-    #[Assert\NotBlank]
+    #[Assert\NotBlank(groups:["postValidation"])]
     public string $street;
-    #[Assert\NotBlank]
+    #[Assert\NotBlank(groups:["postValidation"])]
     public string $town;
 
 

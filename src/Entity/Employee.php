@@ -4,10 +4,24 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
 use App\Repository\EmployeeRepository;
+use App\State\EmployeeProcessor;
+use App\Dto\EmployeeDto;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
 
 #[ORM\Entity(repositoryClass: EmployeeRepository::class)]
 #[ApiResource]
+#[Post(input: EmployeeDto::class,processor: EmployeeProcessor::class)]
+#[Put]
+#[Get]
+#[Patch]
+#[Delete]
+#[GetCollection]
 class Employee
 {
     #[ORM\Id]
