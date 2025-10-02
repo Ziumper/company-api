@@ -1,8 +1,8 @@
 {
-    "name": "symfony/skeleton",
+    "name": "ziumper/company-api",
     "type": "project",
     "license": "MIT",
-    "description": "A minimal Symfony project recommended to create bare bones applications",
+    "description": "Company api project for saving company related data",
     "minimum-stability": "stable",
     "prefer-stable": true,
     "require": {
