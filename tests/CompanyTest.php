@@ -4,6 +4,7 @@ namespace App\Tests;
 
 use App\Entity\Company;
 use App\Factory\CompanyFactory;
+use App\Factory\EmployeeFactory;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Zenstruck\Foundry\Test\Factories;
 use Zenstruck\Foundry\Test\ResetDatabase;
@@ -13,263 +14,239 @@ class CompanyTest extends WebTestCase
     use ResetDatabase, Factories;
 
     private string $apiUrl = '/api/company';
-            
+              
     public function testGetCollection(): void
     {
         $client = static::createClient();
         CompanyFactory::createMany(100);
         
         $client->request('GET', $this->apiUrl);
+        $this->assertResponseIsSuccessful();
+        $this->assertResponseHeaderSame('content-type', 'application/json');
+        $this->assertResponseIsSuccessful();
+        $data = json_decode($client->getResponse()->getContent(), true);
         
+        $this->assertArrayHasKey('page', $data);
+        $this->assertArrayHasKey('limit', $data);
+        $this->assertArrayHasKey('total', $data);
+        $this->assertNotEmpty($data['data']);
+        $this->assertCount($data['limit'], $data['data']);
+    }
+    
+    public function testJsonResponseDoesNotContainEscapedUnicode(): void
+    {
+        $client = static::createClient();
+        CompanyFactory::createOne(['name'=> 'Grzęgorz Brzęczyszczykiewicz Acme Sp. z o.o.']);
+        $client->request('GET', $this->apiUrl);
         $this->assertResponseIsSuccessful();
-        $this->assertResponseHeaderSame('content-type', 'application/json; charset=utf-8');
-        $this->assertResponseIsSuccessful();
+        $content = $client->getResponse()->getContent();
+        $this->assertNotFalse($content, 'Response content should not be false');
+        $this->assertDoesNotMatchRegularExpression('/\\\\u[0-9a-fA-F]{4}/', $content, 'Response contains escaped Unicode characters');
     }
 
-//    public function testCreateCompany(): void
-//    {
-//        $company = new Company();
-//
-//        /**
-//         * @var Generator $faker
-//         */
-//        $faker = CompanyFactory::faker();
-//        $company->setName($faker->name());
-//        $company->setStreet($faker->streetAddress()); 
-//        $company->setTaxReferenceNumber($faker->numerify("##########")); 
-//        $company->setTown($faker->city());
-//        $company->setZipcode($faker->postcode()); 
-//
-//        $array = json_decode(json_encode($company), true);
-//        
-//        /**
-//         * @var ResponseInterface $response
-//         */
-//        $response = static::createClient()->request('POST', $this->apiUrl, 
-//        [
-//            'json' => $array,    
-//            'headers'=> [
-//                'content-type' => 'application/ld+json'
-//            ]
-//            ]);
-//
-//        $content = $response->toArray();
-//        
-//        $this->assertEquals($company->name, $content['name'],"name of company is wrong!");
-//        $this->assertEquals($company->street, $content['street'], "street is wrong for company!");
-//        $this->assertEquals($company->zipcode, $content['zipcode'],"zipcode is wrong for company");
-//        $this->assertEquals($company->town, $content['town'], "town is wrogn for company");
-//     
-//        $this->assertResponseIsSuccessful(message:"not succesfull response, from post message");
-//        $this->assertMatchesResourceItemJsonSchema(Company::class);
-//    }
+    public function testCreateCompany(): void
+    {
+        $client = static::createClient();
+       
+        $data = new CompanyFactory()->generateRandomFeed();
+        $client->request(
+                method: 'POST', 
+                uri: $this->apiUrl,
+                server: ['CONTENT_TYPE' => 'application/json'], 
+                content: json_encode($data)
+        );
 
-//    public function testWrongCreateCompanyWithWrongZipCodeFormat(): void
-//    {
-//        $company = new CompanyDto();
-//
-//        /**
-//         * @var \Faker\Generator $faker
-//         */
-//        $faker = CompanyFactory::faker();
-//        $company->name = $faker->name();
-//        $company->street = $faker->streetAddress();
-//        $company->taxReferenceNumber = $faker->numerify("#########"); //9 numbers instead 10
-//        $company->town = $faker->city();
-//        $company->zipcode = $faker->postcode();
-//
-//        $array = json_decode(json_encode($company), true);
-//        
-//        static::createClient()->request('POST', $this->apiUrl, 
-//        [
-//            'json' => $array,    
-//            'headers'=> [
-//                'content-type' => 'application/ld+json'
-//            ]
-//            ]);
-//
-//        $this->assertResponseStatusCodeSame(422);
-//    }
-//
-//    public function testWrongCreateCompanyWithWrongZipCode(): void
-//    {
-//        $company = new CompanyDto();
-//
-//        /**
-//         * @var \Faker\Generator $faker
-//         */
-//        $faker = CompanyFactory::faker();
-//        $company->name = $faker->name();
-//        $company->street = $faker->streetAddress();
-//        $company->taxReferenceNumber = $faker->numerify("##########"); 
-//        $company->town = $faker->city();
-//        $company->zipcode = $faker->postcode().$faker->randomDigit();
-//
-//        $array = json_decode(json_encode($company), true);
-//        
-//        static::createClient()->request('POST', $this->apiUrl, 
-//        [
-//            'json' => $array,    
-//            'headers'=> [
-//                'content-type' => 'application/ld+json'
-//            ]
-//            ]);
-//
-//        $this->assertResponseStatusCodeSame(422);
-//    }
-//
-//    public function testBlankCreateCompany() {
-//
-//        $companies = [];
-//        $companies[] = $this->getCompanyWithBlankField("name");
-//        $companies[] = $this->getCompanyWithBlankField("street");
-//        $companies[] = $this->getCompanyWithBlankField("taxReferenceNumber");
-//        $companies[] = $this->getCompanyWithBlankField("town");
-//        $companies[] = $this->getCompanyWithBlankField("zipcode");
-//        
-//        foreach( $companies as $company ) {
-//
-//            $response = static::createClient()->request('POST', $this->apiUrl, 
-//            [
-//                'json' => $company,    
-//                'headers'=> [
-//                    'content-type' => 'application/ld+json'
-//                ]
-//            ]);
-//            
-//
-//            $this->assertEquals(422, $response->getStatusCode());
-//        }
-//    }
-//
-//    public function testPutUpdate() {
-//        $oldName = "Old Company S.A.";
-//        $newName = "New Company S.A";
-//        $company = CompanyFactory::createOne(['name' => $oldName]);
-//   
-//        $companyDto = new CompanyDto();
-//        $companyDto->name = $newName;
-//        $companyDto->street = $company->getStreet();
-//        $companyDto->town = $company->getTown();
-//        $companyDto->taxReferenceNumber = $company->getTaxReferenceNumber();
-//        $companyDto->zipcode = $company->getZipcode();
-//
-//
-//        $array = json_decode(json_encode($companyDto), true);
-//
-//        $iri = $this->findIriBy(Company::class, ["name" => $oldName]);
-//        static::createClient()->request('PUT', $iri, 
-//        [
-//            'json' => $array,
-//            'headers' => [
-//                'Content-Type' => 'application/ld+json',
-//            ]           
-//        ]);
-//
-//        $this->assertResponseIsSuccessful();
-//        $this->assertJsonContains([
-//            'name' => $newName,
-//        ]);
-//    }
-//
-//    public function testPutUpdateFailWithEmptyName() {
-//        $oldName = "Old Company S.A.";
-//        $newName = "New Company S.A";
-//        $company = CompanyFactory::createOne(['name' => $oldName]);
-//   
-//        $companyDto = new CompanyDto();
-//        $companyDto->name = '';
-//        $companyDto->street = $company->getStreet();
-//        $companyDto->town = $company->getTown();
-//        $companyDto->taxReferenceNumber = $company->getTaxReferenceNumber();
-//        $companyDto->zipcode = $company->getZipcode();
-//
-//
-//        $array = json_decode(json_encode($companyDto), true);
-//
-//        $iri = $this->findIriBy(Company::class, ["name" => $oldName]);
-//        static::createClient()->request('PUT', $iri, 
-//        [
-//            'json' => $array,
-//            'headers' => [
-//                'Content-Type' => 'application/ld+json',
-//            ]           
-//        ]);
-//
-//        $this->assertResponseIsUnprocessable();
-//    }
-//
-//    public function testPartialUpdate() {
-//         $oldName = "Old Company S.A.";
-//         $newName = "New Company S.A";
-//         CompanyFactory::createOne(['name' => $oldName]);
-//    
-//         $iri = $this->findIriBy(Company::class, ['name' => $oldName]);
-//         static::createClient()->request('PATCH', $iri, [
-//             'json' => [
-//                 'name' => $newName,
-//             ],
-//             'headers' => [
-//                 'Content-Type' => 'application/merge-patch+json',
-//             ]           
-//         ]);
-// 
-//         $this->assertResponseIsSuccessful();
-//         $this->assertJsonContains([
-//             'name' => $newName,
-//         ]);
-//    }   
-//
-//    public function testPartialUpdateCompanyFailBecauseOfEmptyNameValue() {
-//        $oldName = "Old Company S.A.";
-//        CompanyFactory::createOne(['name' => $oldName]);
-//   
-//        $iri = $this->findIriBy(Company::class, ['name' => $oldName]);
-//        static::createClient()->request('PATCH', $iri, [
-//            'json' => [
-//                'name' => '',
-//            ],
-//            'headers' => [
-//                'Content-Type' => 'application/merge-patch+json',
-//            ]           
-//        ]);
-//
-//        $this->assertResponseIsUnprocessable();
-//   }   
-//
-//    
-//    public function testDeleteBook(): void
-//    {
-//        $companyName = "My Company S.A";
-//        CompanyFactory::createOne(['name' => $companyName]);
-//        
-//        $iri = $this->findIriBy(Company::class, ['name' => $companyName]);
-//        static::createClient()->request('DELETE', $iri);
-//
-//        $this->assertResponseStatusCodeSame(204);
-//        $this->assertNull(
-//            static::getContainer()->get('doctrine')->getRepository(Company::class)->findOneBy(['name' => $companyName])
-//        );
-//    }
-//
-//    private function getCompanyWithBlankField(string $name): array {
-//        $company = new CompanyDto();
-//
-//        /**
-//         * @var \Faker\Generator $faker
-//         */
-//        $faker = CompanyFactory::faker();
-//        $company->name = $faker->name();
-//        $company->street = $faker->streetAddress();
-//        $company->taxReferenceNumber = $faker->numerify("##########"); 
-//        $company->town = $faker->city();
-//        $company->zipcode = $faker->postcode();
-//
-//        $array = json_decode(json_encode($company), true);
-//
-//        $array[$name] = "";
-//
-//        return $array;
-//    }
-  
+        $this->assertResponseIsSuccessful(message:"not succesfull response, from post message");
+        $content = $client->getResponse()->getContent();
+        $this->assertNotEmpty($content);
+        
+        $company = json_decode($content, associative: true);
+
+        $this->assertEquals($data['name'], $company['name'], "name of company is wrong!");
+        $this->assertEquals($data['street'], $company['street'], "street is wrong for company!");
+        $this->assertEquals($data['taxReferenceNumber'], $company['taxReferenceNumber'],"tax is wrong for company");
+        $this->assertEquals($data['zipcode'], $company['zipcode'], "zip codeis wrong for company");
+        
+        $this->assertGreaterThan(0, $company['id']);
+        $this->assertNotNull($company['createdAt']);
+        $this->assertNotNull($company['updatedAt']);     
+    }
+    
+    public function testShow(): void 
+    {
+        $client = static::createClient();
+        $company = CompanyFactory::createOne();
+        
+        $client->request(
+                method: 'GET', 
+                uri: $this->apiUrl."/{$company->getId()}",
+                server: ['CONTENT_TYPE' => 'application/json'], 
+                content: json_encode($company)
+        );
+        
+        $this->assertResponseIsSuccessful();
+        $json = json_decode($client->getResponse()->getContent(), true);
+        $this->assertEquals($company->getId(), $json['id']);
+    }
+
+    public function testValidation(): void
+    {
+        $client = static::createClient();
+        $company = new CompanyFactory()->generateRandomFeed();
+        $company['taxReferenceNumber'] = 'Test 123456';
+        
+        $client->request(
+                method: 'POST', 
+                uri: $this->apiUrl,
+                server: ['CONTENT_TYPE' => 'application/json'], 
+                content: json_encode($company)
+        );
+
+        $this->assertResponseStatusCodeSame(400);
+    }
+
+    public function testPutUpdate(): void 
+    {
+        $client = static::createClient();
+        $oldName = "Old Company S.A.";
+        $newName = "New Company S.A";
+        $company = CompanyFactory::createOne(['name' => $oldName]);
+        
+        $array = [
+            'name' => $newName
+        ];
+        
+        $client->request(
+                method: 'PUT', 
+                uri: $this->apiUrl."/{$company->getId()}",
+                server: ['CONTENT_TYPE' => 'application/json'], 
+                content: json_encode($array)
+        );
+        
+        $this->assertResponseIsSuccessful();
+        $this->assertEquals($newName, json_decode($client->getResponse()->getContent(),true)["name"]);
+    }
+    
+    public function testPutUpdateIfNoCompany(): void 
+    {
+        $client = static::createClient();
+        $newName = "New Company S.A";
+        
+        $array = [
+            'name' => $newName
+        ];
+
+        $id = -10;
+
+        $client->request(
+                method: 'PUT', 
+                uri: $this->apiUrl."/$id",
+                server: ['CONTENT_TYPE' => 'application/json'], 
+                content: json_encode($array)
+        );
+        
+        $this->assertResponseStatusCodeSame(404);
+    }
+
+    public function testDeleteCompany(): void
+    {
+        $client = static::createClient();
+        $company = CompanyFactory::createOne();
+        
+        $client->request(
+                method: 'DELETE', 
+                uri: $this->apiUrl."/{$company->getId()}",
+                server: ['CONTENT_TYPE' => 'application/json'], 
+        );
+        
+        $this->assertResponseStatusCodeSame(204);
+        $result = static::getContainer()->get('doctrine')->getRepository(Company::class)->findById($company->getId());
+        $this->assertEmpty($result);
+    }
+    
+    public function testDeleteWithNotExistingId(): void
+    {
+        $client = static::createClient();
+        $company = CompanyFactory::createOne();
+        
+        $id = -10;
+        
+        $client->request(
+                method: 'DELETE', 
+                uri: $this->apiUrl."/$id",
+                server: ['CONTENT_TYPE' => 'application/json'], 
+        );
+        
+        $this->assertResponseStatusCodeSame(404);
+        
+        //sanity check
+        $result = static::getContainer()->get('doctrine')->getRepository(Company::class)->findById($company->getId());
+        $this->assertNotEmpty($result);
+    }
+
+    public function testCreateWithEmployeers(): void
+    {
+        $client = static::createClient();
+       
+        $data = new CompanyFactory()->generateRandomFeed();
+        
+        $employeeFactory = new EmployeeFactory();
+        $employeers = [];
+        
+        $amountOfEmployeers = 10;
+        for($i = 0; $i < $amountOfEmployeers; $i++) {
+            $employeers[] = $employeeFactory->generateRandomFeed();
+        }
+        
+        $data['employeers'] = $employeers;
+        
+        $client->request(
+                method: 'POST', 
+                uri: $this->apiUrl,
+                server: ['CONTENT_TYPE' => 'application/json'], 
+                content: json_encode($data)
+        );
+
+        $this->assertResponseIsSuccessful(message:"not succesfull response, from post message");
+        $content = $client->getResponse()->getContent();
+        $this->assertNotEmpty($content);
+        
+        $this->assertCount($amountOfEmployeers, json_decode($content, associative: true)['employeers']);
+    }
+    
+    public function testUpdateCompanyWihtEmploeeyrs(): void 
+    {
+        $client = static::createClient();
+        $company = CompanyFactory::createOne();
+        $newCompany = CompanyFactory::createOne();
+
+        $amountOfEmployeers = 10;
+        $employeers = EmployeeFactory::createMany($amountOfEmployeers ,['company' => $company]);
+        
+        $mapedData = array_map(fn ($employee) => [
+            'id' => $employee->getId(),
+            'name' => $employee->getName(),
+            'surname' => $employee->getSurname(),
+            'email' => $employee->getEmail(),
+        ],$employeers);
+        
+        $array = [
+            'employeers' => $mapedData
+        ];
+        
+        $client->request(
+                method: 'PUT', 
+                uri: $this->apiUrl."/{$newCompany->getId()}",
+                server: ['CONTENT_TYPE' => 'application/json'], 
+                content: json_encode($array)
+        );
+        
+     
+        $this->assertResponseIsSuccessful();
+        $repository = static::getContainer()->get('doctrine')->getRepository(Company::class);
+        $oldEmployeers = $repository->find($company->getId())->getEmployeers();
+        static::assertCount(0,$oldEmployeers);
+        $newEmployeers = $repository->find($newCompany->getId())->getEmployeers();
+        static::assertCount($amountOfEmployeers, $newEmployeers);
+    }
 }

@@ -2,73 +2,62 @@
 
 namespace App\Entity;
 
-use App\Repository\CompanyRepository;
-use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Serializer\Attribute\MaxDepth;
 use Symfony\Component\Validator\Constraints as Assert;
 
-#[ORM\Entity(repositoryClass: CompanyRepository::class)]
-#[ORM\UniqueConstraint(fields:["taxReferenceNumber"],name:"tax_reference_number")]
-class Company
+#[ORM\Entity]
+#[ORM\UniqueConstraint(fields:["taxReferenceNumber"], name:"tax_reference_number")]
+#[ORM\HasLifecycleCallbacks]
+class Company extends BaseEntity
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue(strategy:"SEQUENCE")]
-    #[ORM\Column]
-    #[Groups('company:read')]
-    private ?int $id = null;
-
     #[ORM\Column(length: 255)]
-    #[Assert\NotBlank(groups:["postValidation"])]
-    #[Groups(['company:read','company:create'])]
+    #[Assert\NotBlank(groups:["Default"])]
+    #[Groups(['read','create','update'])]
     private ?string $name = null;
 
     #[ORM\Column(length: 10)]
-    #[Assert\NotBlank(groups:["postValidation"])]
-    #[Assert\Regex('^\d{10}$^',groups:['postValidation'])]
-    #[Groups('company:read','company:create')]
+    #[Assert\NotBlank(groups:["Default"])]
+    #[Assert\Regex('^\d{10}$^',groups:['Default'])]
+    #[Groups(['read','create','update'])]
     private ?string $taxReferenceNumber = null;
 
     #[ORM\Column(length: 255)]
-    #[Assert\NotBlank(groups:["postValidation"])]
-    #[Groups('company:read','company:create')]
+    #[Assert\NotBlank(groups:["Default"])]
+    #[Groups(['read','create','update'])]
     private ?string $street = null;
 
     #[ORM\Column(length: 6)]
-    #[Assert\NotBlank(groups:['postValidation'])]
-    #[Assert\Regex('^\d{2}-\d{3}$^',groups:['postValidation'])]
-    #[Groups('company:read','company:create')]
+    #[Assert\NotBlank(groups:['Default'])]
+    #[Assert\Regex('^\d{2}-\d{3}$^',groups:['Default'])]
+    #[Groups(['read','create','update'])]
     private ?string $zipcode = null;
 
     #[ORM\Column(length: 255)]
-    #[Assert\NotBlank(groups:["postValidation"])]
-    #[Groups('company:read','company:create')]
+    #[Assert\NotBlank(groups:["Default"])]
+    #[Groups(['read','create','update'])]
     private ?string $town = null;
 
-    #[ORM\OneToMany(targetEntity: Employee::class, mappedBy: 'company', orphanRemoval: true)]
-    #[Groups('company:read','company:create')]
+    #[ORM\OneToMany(
+            targetEntity: Employee::class, 
+            mappedBy: 'company', 
+            orphanRemoval: true, 
+            cascade: ['persist','remove']
+    )]
+    #[Groups(['read','create', 'update'])]
+    #[MaxDepth(1)]
     private Collection $employeers;
 
-    #[ORM\Column]
-    #[Groups(['company:read'])]
-    private ?DateTimeImmutable $createdAt = null;
-
-    #[ORM\Column]
-    #[Groups(['company:read'])]
-    private ?DateTimeImmutable $updatedAt = null;
 
     public function __construct()
     {
         $this->employeers = new ArrayCollection();
     }
 
-    public function getId(): ?int
-    {
-        return $this->id;
-    }
-
+    
     public function getName(): ?string
     {
         return $this->name;
@@ -157,29 +146,5 @@ class Company
         }
 
         return $this;
-    }
-
-    public function getCreatedAt(): ?DateTimeImmutable
-    {
-        return $this->createdAt;
-    }
-
-    public function setCreatedAt(DateTimeImmutable $createdAt): static
-    {
-        $this->createdAt = $createdAt;
-
-        return $this;
-    }
-
-    public function getUpdatedAt(): ?DateTimeImmutable
-    {
-        return $this->updatedAt;
-    }
-
-    public function setUpdatedAt(DateTimeImmutable $updatedAt): static
-    {
-        $this->updatedAt = $updatedAt;
-
-        return $this;
-    }
+    }   
 }

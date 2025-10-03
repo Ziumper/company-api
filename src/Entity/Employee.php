@@ -2,61 +2,39 @@
 
 namespace App\Entity;
 
-use App\Repository\EmployeeRepository;
-use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
-#[ORM\Entity(repositoryClass: EmployeeRepository::class)]
-class Employee
+#[ORM\Entity]
+#[ORM\HasLifecycleCallbacks]
+class Employee extends BaseEntity
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue(strategy:"SEQUENCE")]
-    #[ORM\Column]
-    #[Assert\NotBlank(groups:["postValidation"])]
-    #[Groups(['employee:read'])]
-    private ?int $id = null;
-
     #[ORM\Column(length: 255)]
-    #[Assert\NotBlank(groups:["postValidation"])]
-    #[Groups(['employee:read','employee:create'])]
+    #[Assert\NotBlank(groups:["Default"])]
+    #[Groups(['read', 'create', 'update'])]
     private ?string $name = null;
 
     #[ORM\Column(length: 255)]
-    #[Assert\NotBlank(groups:["postValidation"])]
-    #[Groups(['employee:read','employee:create'])]
+    #[Assert\NotBlank(groups:["Default"])]
+    #[Groups(['read', 'create', 'update'])]
     private ?string $surname = null;
 
     #[ORM\Column(length: 255)]
-    #[Assert\NotBlank(groups:["postValidation"])]
-    #[Assert\Email(groups:["postValidation"])]
-    #[Groups(['employee:read','employee:create'])]
+    #[Assert\NotBlank(groups:["Default"])]
+    #[Assert\Email(groups:["Default"])]
+    #[Groups(['read', 'create', 'update'])]
     private ?string $email = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['employee:read','employee:create'])]
+    #[Groups(['read', 'create', 'update'])]
     private ?string $phoneNumber = null;
 
     #[ORM\ManyToOne(inversedBy: 'employeers')]
     #[ORM\JoinColumn(nullable: false)]
-    #[Assert\NotBlank(groups:["postValidation"])]
-    #[Groups(['employee:read','employee:create'])]
+    #[Assert\NotBlank(groups:["Default"])]
     private ?Company $company = null;
-
-    #[ORM\Column]
-    #[Groups(['employee:read','employee:create'])]
-    private ?DateTimeImmutable $createdAt = null;
-
-    #[ORM\Column]
-    #[Groups(['employee:read','employee:create'])]
-    private ?DateTimeImmutable $updatedAt = null;
-
-    public function getId(): ?int
-    {
-        return $this->id;
-    }
-
+    
     public function getName(): ?string
     {
         return $this->name;
@@ -117,27 +95,4 @@ class Employee
         return $this;
     }
 
-    public function getCreatedAt(): ?DateTimeImmutable
-    {
-        return $this->createdAt;
-    }
-
-    public function setCreatedAt(DateTimeImmutable $createdAt): static
-    {
-        $this->createdAt = $createdAt;
-
-        return $this;
-    }
-
-    public function getUpdatedAt(): ?DateTimeImmutable
-    {
-        return $this->updatedAt;
-    }
-
-    public function setUpdatedAt(DateTimeImmutable $updatedAt): static
-    {
-        $this->updatedAt = $updatedAt;
-
-        return $this;
-    }
 }

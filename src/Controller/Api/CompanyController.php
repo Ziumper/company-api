@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller\Api;
 
 use App\Entity\Company;
+use App\Entity\Employee;
 use App\Repository\CompanyRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -24,7 +25,7 @@ class CompanyController
 
         $offset = ($page - 1) * $limit;
 
-        $companies = $companyRepository->findBy([], \null, $limit, $offset);
+        $companies = $companyRepository->findBy([], null, $limit, $offset);
 
         $data = [
             'page' => $page,
@@ -32,13 +33,13 @@ class CompanyController
             'total' => $companyRepository->count(),
             'data' => $companies,
         ];
-
+        
         $json = $serializer->serialize($data, 'json', [
-            'groups' => ['company:read'],
+            'groups' => ['read'],
             'json_encode_options' => JSON_UNESCAPED_UNICODE,
         ]);
 
-        return new JsonResponse($json, 200, ['content-type' => 'application/json; charset=utf-8'], true);
+        return new JsonResponse($json, 200, ['content-type' => 'application/json'], true);
     }
     
     #[Route('', methods: ['POST'])]
@@ -49,11 +50,13 @@ class CompanyController
         EntityManagerInterface $em
     ): JsonResponse {
         $data = $request->getContent();
+        
         $company = $serializer->deserialize($data, 
                 Company::class, 
                 'json',
-                ['groups' => ['company:create']]);
-        $errors = $validator->validate($company);
+                ['groups' => ['create']]);
+        
+        $errors = $validator->validate(value: $company);
         
         if (count($errors) > 0) {
             return new JsonResponse($serializer->serialize($errors, 'json'), 400, [], true);
@@ -61,15 +64,24 @@ class CompanyController
         
         $em->persist($company);
         $em->flush();
+                
+        $mydata = $serializer->serialize($company, 'json', 
+        [
+            'groups' => ['read'],
+            'json_encode_options' => JSON_UNESCAPED_UNICODE,
+        ]);
         
-        return new JsonResponse($serializer->serialize($company, 'json', ['groups' => ['company:read']]), 201, [], true);
+        return new JsonResponse($mydata, 201, [], true);
     }
 
     #[Route('/{id}', methods: ['GET'])]
-    public function show(Book $book, SerializerInterface $serializer): JsonResponse
+    public function show(Company $company, SerializerInterface $serializer): JsonResponse
     {
         return new JsonResponse(
-            $serializer->serialize($book, 'json', ['groups' => ['book:read']]),
+            $json = $serializer->serialize($company, 'json', [
+            'groups' => ['read'],
+            'json_encode_options' => JSON_UNESCAPED_UNICODE,
+             ]),
             200,
             [],
             true
@@ -82,26 +94,50 @@ class CompanyController
         Company $company,
         SerializerInterface $serializer,
         ValidatorInterface $validator,
-        EntityManagerInterface $em
+        EntityManagerInterface $em,
     ): JsonResponse {
+        
         $serializer->deserialize($request->getContent(), Company::class, 'json', [
-            'object_to_populate' => $company
+            'object_to_populate' => $company,
+            'groups' => ['update'],
         ]);
-
+        
         $errors = $validator->validate($company);
         if (count($errors) > 0) {
             return new JsonResponse($serializer->serialize($errors, 'json'), 400, [], true);
         }
 
+         if ($company->getEmployeers()->count() > 0) {
+            $ids = [];
+            
+            foreach($company->getEmployeers() as $employeer) {
+                $ids[] = $employeer->getId();
+            }
+          
+            $repository = $em->getRepository(Employee::class);
+            $employeers = $repository->findBy(['id' => $ids]);
+            
+            foreach($employeers as $employeer) {
+                $oldCompany = $employeer->getCompany();
+                $oldCompany->removeEmployeer($employeer);
+                $employeer->setCompany($company);
+            }        
+        }
+        
         $em->flush();
 
-        return new JsonResponse($serializer->serialize($company, 'json', ['groups' => ['company:read']]), 200, [], true);
+        $json = $serializer->serialize($company, 'json', [
+            'groups' => ['read'],
+            'json_encode_options' => JSON_UNESCAPED_UNICODE,
+        ]);
+        
+        return new JsonResponse($json, 200, [], true);
     }
 
     #[Route('/{id}', methods: ['DELETE'])]
-    public function delete(Company $book, EntityManagerInterface $em): JsonResponse
+    public function delete(Company $company, EntityManagerInterface $em): JsonResponse
     {
-        $em->remove($book);
+        $em->remove($company);
         $em->flush();
 
         return new JsonResponse(null, 204);
