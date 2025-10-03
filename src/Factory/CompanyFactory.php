@@ -3,71 +3,30 @@
 namespace App\Factory;
 
 use App\Entity\Company;
-use App\Repository\CompanyRepository;
-use Zenstruck\Foundry\ModelFactory;
-use Zenstruck\Foundry\Proxy;
-use Zenstruck\Foundry\RepositoryProxy;
+use DateTime;
+use DateTimeImmutable;
+use Override;
+use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
-/**
- * @extends ModelFactory<Company>
- *
- * @method        Company|Proxy                     create(array|callable $attributes = [])
- * @method static Company|Proxy                     createOne(array $attributes = [])
- * @method static Company|Proxy                     find(object|array|mixed $criteria)
- * @method static Company|Proxy                     findOrCreate(array $attributes)
- * @method static Company|Proxy                     first(string $sortedField = 'id')
- * @method static Company|Proxy                     last(string $sortedField = 'id')
- * @method static Company|Proxy                     random(array $attributes = [])
- * @method static Company|Proxy                     randomOrCreate(array $attributes = [])
- * @method static CompanyRepository|RepositoryProxy repository()
- * @method static Company[]|Proxy[]                 all()
- * @method static Company[]|Proxy[]                 createMany(int $number, array|callable $attributes = [])
- * @method static Company[]|Proxy[]                 createSequence(iterable|callable $sequence)
- * @method static Company[]|Proxy[]                 findBy(array $attributes)
- * @method static Company[]|Proxy[]                 randomRange(int $min, int $max, array $attributes = [])
- * @method static Company[]|Proxy[]                 randomSet(int $number, array $attributes = [])
- */
-final class CompanyFactory extends ModelFactory
+
+final class CompanyFactory extends PersistentObjectFactory
 {
-    /**
-     * @see https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#factories-as-services
-     *
-     * @todo inject services if required
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
-     * @see https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#model-factories
-     *
-     */
-    protected function getDefaults(): array
-    {
+   
+    #[Override]
+    protected function defaults(): array|callable {
         return [
-            'createdAt' => \DateTimeImmutable::createFromMutable(new \DateTime("now")),
-            'name' => self::faker()->company(),
-            'street' => self::faker()->streetAddress(),
-            'taxReferenceNumber' => self::faker()->numerify("##########"),
-            'town' => self::faker()->city(),
-            'updatedAt' => \DateTimeImmutable::createFromMutable(new \DateTime("now")),
-            'zipcode' => self::faker()->postcode()
+            'createdAt' => DateTimeImmutable::createFromMutable(new DateTime("now")),
+            'name' => static::faker()->company(),
+            'street' => static::faker()->streetAddress(),
+            'taxReferenceNumber' => static::faker()->numerify("##########"),
+            'town' => static::faker()->city(),
+            'updatedAt' => DateTimeImmutable::createFromMutable(new DateTime("now")),
+            'zipcode' => static::faker()->postcode()
         ];
     }
 
-    /**
-     * @see https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#initialization
-     */
-    protected function initialize(): self
-    {
-        return $this
-            // ->afterInstantiate(function(Company $company): void {})
-        ;
-    }
-
-    protected static function getClass(): string
-    {
+    #[Override]
+    public static function class(): string {
         return Company::class;
     }
 }
