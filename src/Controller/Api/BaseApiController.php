@@ -66,14 +66,17 @@ abstract readonly class BaseApiController
     
     public function add(
         Request $request,
+        ?BaseEntity &$entity = null,
     ): JsonResponse {
         if (!$this->isJson($request)) {
             return new JsonResponse(['message' => 'Invalid JSON'], 400);
         }
         
-        $data = $request->getContent();
+        if(!$entity) {
+            $data = $request->getContent();
+            $entity = $this->deserialize($data);
+        }
         
-        $entity = $this->deserialize($data);
         $errors = $this->validator->validate($entity);
         
         if (count($errors) > 0) {

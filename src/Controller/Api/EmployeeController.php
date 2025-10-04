@@ -4,6 +4,7 @@ declare (strict_types=1);
 
 namespace App\Controller\Api;
 
+use App\Entity\Company;
 use App\Entity\Employee;
 use Override;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -31,11 +32,36 @@ readonly class EmployeeController extends BaseApiController {
         return $this->list($request);
     }
     
-    
     #[Route('', methods: ['POST'])]
     public function create(Request $request): JsonResponse 
     {
-        return $this->add($request);
+        if (!$this->isJson($request)) {
+            return new JsonResponse(['message' => 'Invalid JSON'], 400);
+        }
+        
+        $payload = $request->toArray();
+     
+        if (!isset($payload['company']) || !is_array($payload['company'])) {
+            return new JsonResponse(['message' => 'Missing required company argument'], 400);
+        }
+        
+        $companyData = $payload['company'];
+
+        if (!isset($companyData['id']) || !is_numeric($companyData['id']) || (int)$companyData['id'] <= 0) {
+            return new JsonResponse(['message' => 'Invalid company id'], 400);
+        }
+        
+        $companyId = (int) $companyData['id'];
+        $detachedCompany = $this->entityManager->find(Company::class, $companyId);
+
+        if (!$detachedCompany) {
+            return new JsonResponse(['message' => 'Company not found'], 404);
+        }
+        
+        $employee = $this->deserialize($request->getContent());
+        $employee->setCompany($detachedCompany);
+        
+        return $this->add($request,$employee);
     }
     
     #[Route('/{id}', methods: ['PUT', 'PATCH'])]
