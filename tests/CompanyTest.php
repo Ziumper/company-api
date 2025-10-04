@@ -278,7 +278,7 @@ class CompanyTest extends WebTestCase
         static::assertCount($amountOfEmployeers, $newEmployeers);
     }
     
-    public function testUpdateCompanyWihtEmploeeyrsWithoutName(): void 
+    public function testUpdateCompanyWihtEmploeeyrsWithoutNameisFailing(): void 
     {
         $client = static::createClient();
         $company = CompanyFactory::createOne();
@@ -305,7 +305,53 @@ class CompanyTest extends WebTestCase
                 content: json_encode($array)
         );
         
+       $this->assertResponseStatusCodeSame(400);
+    }
+    
+    public function testUpdateCompanyWithEmployeersWithPartialData(): void 
+    {
+        $client = static::createClient();
+        $company = CompanyFactory::createOne();
+
+        $amountOfEmployeers = 10;
+        $employeers = EmployeeFactory::createMany($amountOfEmployeers ,['company' => $company]);
+        
+        $mapedData = array_map(fn ($employee) => [
+            'id' => $employee->getId(),
+            'surname' => 'test',
+            'email' => $employee->getEmail(),
+        ],$employeers);
+        
+        $array = [
+            'employeers' => $mapedData
+        ];
+        
+        $client->request(
+                method: 'PATCH', 
+                uri: $this->apiUrl."/{$company->getId()}",
+                server: ['CONTENT_TYPE' => 'application/json'], 
+                content: json_encode($array)
+        );
+        
      
+        $this->assertResponseIsSuccessful();
+        $repository = static::getContainer()->get('doctrine')->getRepository(Company::class);
+        $fetchedEmployeers = $repository->find($company->getId())->getEmployeers();
+        static::assertCount($amountOfEmployeers,$fetchedEmployeers);
+        foreach($fetchedEmployeers as $employeers) {
+            static::assertEquals('test',$employeers->getSurname());
+        }
+    }
+    
+    public function testNoJsonForPost(): void {
+        $client = static::createClient();
+        $client->request(
+                method: 'POST', 
+                uri: $this->apiUrl,
+                server: [], 
+                content: 'some string',
+        );
+        
         $this->assertResponseStatusCodeSame(400);
     }
 }

@@ -10,6 +10,8 @@ use Override;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
+use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
 
 #[Route('/api/company')]
 readonly class CompanyController extends BaseApiController
@@ -35,9 +37,14 @@ readonly class CompanyController extends BaseApiController
     #[Route('', methods: ['POST'])]
     public function create(Request $request): JsonResponse 
     {
+        if (!$this->isJson($request)) {
+            return new JsonResponse(['message' => 'Invalid JSON'], 400);
+        }
+        
         $data = $request->getContent();
         $entity = $this->deserialize($data); 
         
+        //pre handler of validate inner class
         if ($entity->getEmployeers()->count() > 0) {
             foreach($entity->getEmployeers() as $employeer) {
                 $errors = $this->validator->validate($employeer);
@@ -50,48 +57,58 @@ readonly class CompanyController extends BaseApiController
         return $this->add($request);
     }
     
-    #[Route('/{id}', methods: ['PUT'])]
+    #[Route('/{id}', methods: ['PUT', 'PATCH'])]
     public function update(
         Request $request,
         Company $company,
     ): JsonResponse {
-         
-        $this->serializer->deserialize($request->getContent(), $this->getEntityClass(), 'json', [
-            'object_to_populate' => $company,
-            'groups' => ['update'],
-        ]);
-        
-        $errors = $this->validator->validate($company);
-        if (count($errors) > 0) {
-            return new JsonResponse($this->serializer->serialize($errors, 'json'), 400, [], true);
+        if (!$this->isJson($request)) {
+            return new JsonResponse(['message' => 'Invalid JSON'], 400);
         }
 
-        if ($company->getEmployeers()->count() > 0) {
+        $payload = json_decode($request->getContent(), true);
+        
+        //pre handler validate and update inner class
+        if (!empty($payload['employeers'])) {
             
             $ids = [];
+            $serializedEmployeers = [];
             
-            foreach($company->getEmployeers() as $employeer) {
+            foreach($payload['employeers'] as $employeer) {
+                $ids[] = $employeer['id'];
+                $serializedEmployeers[$employeer['id']] = json_encode($employeer);
+            }
+            
+            $repository = $this->entityManager->getRepository(Employee::class);
+            $employeers = $repository->findBy(['id' => $ids]);
+            
+            foreach($employeers as $employeer) {
+                $this->serializer->deserialize(
+                    data: $serializedEmployeers[$employeer->getId()], 
+                    type: Employee::class, 
+                    format: 'json',
+                    context: [
+                        AbstractNormalizer::GROUPS => 'update',
+                        AbstractNormalizer::OBJECT_TO_POPULATE => $employeer,
+                        AbstractObjectNormalizer::SKIP_NULL_VALUES => true,
+                        AbstractObjectNormalizer::SKIP_UNINITIALIZED_VALUES => true,
+                    ]
+                ); 
+                
                 $errors = $this->validator->validate($employeer);
                 if (count($errors) > 0) {
                    return new JsonResponse($this->serializer->serialize($errors, 'json'), 400, [], true);
                 }
                 
-                $ids[] = $employeer->getId();
-            }
-          
-            $repository = $this->entityManager->getRepository(Employee::class);
-            $employeers = $repository->findBy(['id' => $ids]);
-            
-            foreach($employeers as $employeer) {
                 $oldCompany = $employeer->getCompany();
                 $oldCompany->removeEmployeer($employeer);
                 $employeer->setCompany($company);
+                $company->addEmployeer($employeer);
             }        
         }
         
-        $this->entityManager->flush();
-
-        return new JsonResponse($this->serialize($company), 200, [], true);
+        
+        return $this->patch($request, $company);
     }
     
     #[Override]

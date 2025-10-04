@@ -67,6 +67,10 @@ abstract readonly class BaseApiController
     public function add(
         Request $request,
     ): JsonResponse {
+        if (!$this->isJson($request)) {
+            return new JsonResponse(['message' => 'Invalid JSON'], 400);
+        }
+        
         $data = $request->getContent();
         
         $entity = $this->deserialize($data);
@@ -82,21 +86,50 @@ abstract readonly class BaseApiController
         return $this->show($entity);
     }
     
+    public function patch(Request $request, ?BaseEntity &$entity = null): JsonResponse 
+    {
+        if (!$this->isJson($request)) {
+            return new JsonResponse(['message' => 'Invalid JSON'], 400);
+        }
+        
+        if ($entity) {
+            $this->deserialize($request->getContent(), ['update'], $entity);
+        }
+        
+        $errors = $this->validator->validate($entity);
+        if (count($errors) > 0) {
+            return new JsonResponse($this->serializer->serialize($errors, 'json'), 400, [], true);
+        }
+        
+        $this->entityManager->flush();
+
+        return new JsonResponse($this->serialize($entity), 200, [], true);
+    }
+    
     protected function serialize(mixed $data, array $groups = ['read']): string 
     {
         return $this->serializer->serialize($data, 'json', [
             'groups' => $groups,
             'json_encode_options' => JSON_UNESCAPED_UNICODE,
+            
         ]);
     }
     
-    protected function deserialize(string $data, array $groups = [ 'create'] ): mixed
+    protected function deserialize(string $data, array $groups = [ 'create'], ?BaseEntity &$entity = null): mixed
     {
         $config = [
             'groups' => $groups,
         ];
         
+        if ($entity) {
+            $config['object_to_populate'] = $entity;
+        }
+        
         return  $this->serializer->deserialize($data, $this->getEntityClass(), 'json', $config);
+    }
+    
+    protected function isJson(Request $request): bool {
+        return json_validate($request->getContent());
     }
         
 }
