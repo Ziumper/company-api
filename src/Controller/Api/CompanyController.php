@@ -66,7 +66,7 @@ readonly class CompanyController extends BaseApiController
             return new JsonResponse(['message' => 'Invalid JSON'], 400);
         }
 
-        $payload = json_decode($request->getContent(), true);
+        $payload = $request->toArray();
         
         //pre handler validate and update inner class
         if (!empty($payload['employeers'])) {
@@ -106,7 +106,6 @@ readonly class CompanyController extends BaseApiController
                 $company->addEmployeer($employeer);
             }        
         }
-        
         
         return $this->patch($request, $company);
     }

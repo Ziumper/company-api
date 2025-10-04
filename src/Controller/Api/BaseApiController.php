@@ -9,8 +9,11 @@ use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityRepository;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Serializer\Encoder\JsonEncode;
+use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use function json_validate;
 
 abstract readonly class BaseApiController 
 {
@@ -112,9 +115,8 @@ abstract readonly class BaseApiController
     protected function serialize(mixed $data, array $groups = ['read']): string 
     {
         return $this->serializer->serialize($data, 'json', [
-            'groups' => $groups,
-            'json_encode_options' => JSON_UNESCAPED_UNICODE,
-            
+           AbstractNormalizer::GROUPS => $groups,
+           JsonEncode::OPTIONS => JSON_UNESCAPED_UNICODE,
         ]);
     }
     
