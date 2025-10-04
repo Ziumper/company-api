@@ -35,7 +35,19 @@ readonly class CompanyController extends BaseApiController
     #[Route('', methods: ['POST'])]
     public function create(Request $request): JsonResponse 
     {
-       return $this->add($request);
+        $data = $request->getContent();
+        $entity = $this->deserialize($data); 
+        
+        if ($entity->getEmployeers()->count() > 0) {
+            foreach($entity->getEmployeers() as $employeer) {
+                $errors = $this->validator->validate($employeer);
+                if (count($errors) > 0) {
+                   return new JsonResponse($this->serializer->serialize($errors, 'json'), 400, [], true);
+                }
+            }
+        }
+        
+        return $this->add($request);
     }
     
     #[Route('/{id}', methods: ['PUT'])]
@@ -55,9 +67,15 @@ readonly class CompanyController extends BaseApiController
         }
 
         if ($company->getEmployeers()->count() > 0) {
+            
             $ids = [];
             
             foreach($company->getEmployeers() as $employeer) {
+                $errors = $this->validator->validate($employeer);
+                if (count($errors) > 0) {
+                   return new JsonResponse($this->serializer->serialize($errors, 'json'), 400, [], true);
+                }
+                
                 $ids[] = $employeer->getId();
             }
           

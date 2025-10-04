@@ -214,6 +214,34 @@ class CompanyTest extends WebTestCase
         $this->assertCount($amountOfEmployeers, json_decode($content, associative: true)['employeers']);
     }
     
+    public function testCreateCompanyWithEmployeersWithoutName(): void 
+    {
+        $client = static::createClient();
+       
+        $data = new CompanyFactory()->generateRandomFeed();
+        
+        $employeeFactory = new EmployeeFactory();
+        $employeers = [];
+        
+        $amountOfEmployeers = 10;
+        for($i = 0; $i < $amountOfEmployeers; $i++) {
+            $feed = $employeeFactory->generateRandomFeed();
+            $feed['name'] = '';
+            $employeers[] = $feed;
+        }
+        
+        $data['employeers'] = $employeers;
+        
+        $client->request(
+                method: 'POST', 
+                uri: $this->apiUrl,
+                server: ['CONTENT_TYPE' => 'application/json'], 
+                content: json_encode($data)
+        );
+
+        $this->assertResponseStatusCodeSame(400);
+    }
+    
     public function testUpdateCompanyWihtEmploeeyrs(): void 
     {
         $client = static::createClient();
@@ -248,5 +276,36 @@ class CompanyTest extends WebTestCase
         static::assertCount(0,$oldEmployeers);
         $newEmployeers = $repository->find($newCompany->getId())->getEmployeers();
         static::assertCount($amountOfEmployeers, $newEmployeers);
+    }
+    
+    public function testUpdateCompanyWihtEmploeeyrsWithoutName(): void 
+    {
+        $client = static::createClient();
+        $company = CompanyFactory::createOne();
+        $newCompany = CompanyFactory::createOne();
+
+        $amountOfEmployeers = 10;
+        $employeers = EmployeeFactory::createMany($amountOfEmployeers ,['company' => $company]);
+        
+        $mapedData = array_map(fn ($employee) => [
+            'id' => $employee->getId(),
+            'name' => '',
+            'surname' => $employee->getSurname(),
+            'email' => $employee->getEmail(),
+        ],$employeers);
+        
+        $array = [
+            'employeers' => $mapedData
+        ];
+        
+        $client->request(
+                method: 'PUT', 
+                uri: $this->apiUrl."/{$newCompany->getId()}",
+                server: ['CONTENT_TYPE' => 'application/json'], 
+                content: json_encode($array)
+        );
+        
+     
+        $this->assertResponseStatusCodeSame(400);
     }
 }
