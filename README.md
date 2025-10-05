@@ -29,3 +29,8 @@ php bin/console doctrine:migrations:migrate --no-interaction --env=test
 # run unit test
 php bin/phpunit
 ```
+
+For debugging tests in apache netbeans
+```
+docker compose exec -e XDEBUG_TRIGGER=netbeans-xdebug php vendor/bin/phpunit
+```
