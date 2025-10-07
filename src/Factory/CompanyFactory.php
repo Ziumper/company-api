@@ -6,12 +6,11 @@ use App\Entity\Company;
 use Override;
 use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
-
 final class CompanyFactory extends PersistentObjectFactory
 {
-   
     #[Override]
-    protected function defaults(): array|callable {
+    protected function defaults(): array|callable
+    {
         return [
             'name' => static::faker()->company(),
             'street' => static::faker()->streetAddress(),
@@ -20,13 +19,15 @@ final class CompanyFactory extends PersistentObjectFactory
             'zipcode' => static::faker()->postcode()
         ];
     }
-    
-    public function generateRandomFeed(): array {
+
+    public function generateRandomFeed(): array
+    {
         return $this->defaults();
     }
 
     #[Override]
-    public static function class(): string {
+    public static function class(): string
+    {
         return Company::class;
     }
 }

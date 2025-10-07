@@ -20,7 +20,7 @@ class Company extends BaseEntity
 
     #[ORM\Column(length: 10)]
     #[Assert\NotBlank(groups:["Default"])]
-    #[Assert\Regex('^\d{10}$^',groups:['Default'])]
+    #[Assert\Regex('^\d{10}$^', groups:['Default'])]
     #[Groups(['read','create','update'])]
     private ?string $taxReferenceNumber = null;
 
@@ -31,7 +31,7 @@ class Company extends BaseEntity
 
     #[ORM\Column(length: 6)]
     #[Assert\NotBlank(groups:['Default'])]
-    #[Assert\Regex('^\d{2}-\d{3}$^',groups:['Default'])]
+    #[Assert\Regex('^\d{2}-\d{3}$^', groups:['Default'])]
     #[Groups(['read','create','update'])]
     private ?string $zipcode = null;
 
@@ -41,10 +41,10 @@ class Company extends BaseEntity
     private ?string $town = null;
 
     #[ORM\OneToMany(
-            targetEntity: Employee::class, 
-            mappedBy: 'company', 
-            orphanRemoval: true, 
-            cascade: ['persist','remove']
+        targetEntity: Employee::class,
+        mappedBy: 'company',
+        orphanRemoval: true,
+        cascade: ['persist','remove']
     )]
     #[Groups(['read','create'])]
     private Collection $employeers;
@@ -55,7 +55,7 @@ class Company extends BaseEntity
         $this->employeers = new ArrayCollection();
     }
 
-    
+
     public function getName(): ?string
     {
         return $this->name;
@@ -144,5 +144,5 @@ class Company extends BaseEntity
         }
 
         return $this;
-    }   
+    }
 }

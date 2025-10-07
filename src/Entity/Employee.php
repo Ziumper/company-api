@@ -34,7 +34,7 @@ class Employee extends BaseEntity
     #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotBlank(groups:["Default"])]
     private ?Company $company = null;
-    
+
     public function getName(): ?string
     {
         return $this->name;
